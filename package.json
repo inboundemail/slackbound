@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nitro build",
     "dev": "nitro dev",
+    "dev:tunnel": "node scripts/dev.tunnel.mjs",
     "lint": "biome check",
     "lint:fix": "biome check --write"
   },

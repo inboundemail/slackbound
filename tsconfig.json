@@ -24,5 +24,7 @@
     // Libs & paths
     "lib": ["ESNext"],
     "baseUrl": "."
-  }
+  },
+  "include": ["src/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
