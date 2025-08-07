@@ -24,16 +24,18 @@ This is a generic Bolt for JavaScript (TypeScript) template app used to build ou
 2. Choose the workspace you want to install the application to
 3. Copy the contents of [manifest.json](./manifest.json) into the text box that says `*Paste your manifest code here*` (within the JSON tab) and click _Next_
 4. Review the configuration and click _Create_
-5. Open the _Install App_ tab on the left menu. Click _Install to <Workspace_Name>_ and _Allow_ on the screen that follows. You'll then be redirected to the App Configuration dashboard.
-6. On the following screen, copy the _Bot User OAuth Token_ into your `.env` file under `SLACK_BOT_TOKEN`.
-7. Open the _Basic Information_ tab and copy your _Slack Signing Secret_ into your `.env` file under `SLACK_SIGNING_SECRET`.
+5. From the _Basic Information_ tab, copy your _Slack Signing Secret_ into your `.env` file under `SLACK_SIGNING_SECRET`.
+6. Open the _Install App_ tab on the left menu. Click _Install to <Workspace_Name>_ and _Allow_ on the screen that follows.
+7. On the following screen, copy the _Bot User OAuth Token_ into your `.env` file under `SLACK_BOT_TOKEN`.
+
 
 #### Prepare for Local Development
 
 1. In the terminal run `slack app link`
-2. Copy your App ID from the app you just created
-3. Select `Local` when prompted
-4. Open your [`hooks.json`](./.slack/hooks.json) file under `/.slack/hooks.json` and add a `start` hook:
+2. Select your Slack team in the terminal
+3. Copy your App ID from the app you just created
+4. Select `Local` when prompted
+5. Open your [`hooks.json`](./.slack/hooks.json) file under `/.slack/hooks.json` and add a `start` hook:
 ```json
 {
   "hooks": {
