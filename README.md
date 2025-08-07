@@ -3,7 +3,7 @@
 
 This is a generic Bolt for JavaScript (TypeScript) template app used to build out Slack apps with the Nitro framework.
 
-Before getting started, make sure you have a development workspace where you have permissions to install apps. You can [create one here](https://slack.com/create) or use a [developer sandbox](https://api.slack.com/developer-program)
+Before getting started, make sure you have a development workspace where you have permissions to install apps. You can [create one here](https://slack.com/create) or use a [developer sandbox](https://api.slack.com/developer-program).
 
 ## Installation
 
