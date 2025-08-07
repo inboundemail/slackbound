@@ -18,52 +18,50 @@ Before getting started, make sure you have a development workspace where you hav
 
 Before you can run the app, you'll need to store some environment variables.
 
-1. Copy `env.sample` to `.env`
-2. Open your apps configuration page from [this list](https://api.slack.com/apps), click _OAuth & Permissions_ in the left hand menu, then copy the _Bot User OAuth Token_ into your `.env` file under `SLACK_BOT_TOKEN`
-3. Click _Basic Information_ from the left hand menu and follow the steps in the _App-Level Tokens_ section to create an app-level token with the `connections:write` scope. Copy that token into your `.env` as `SLACK_APP_TOKEN`.
+1. Copy [`.env.example`](./.env.example) to [`.env`](./.env)
+2. Open your apps configuration page from [this list](https://api.slack.com/apps). On the _Basic Information_ tab, copy the _Signing Secret_ into your `.env` file under `SLACK_SIGNING_SECRET`. Then click _OAuth & Permissions_ in the left hand menu, then copy the _Bot User OAuth Token_ into your `.env` file under `SLACK_BOT_TOKEN`.
 
-#### Install Dependencies
 
-`npm install`
+#### Prepare for Local Development
 
-#### Run Bolt Server
+1. In the terminal run `slack app link`
+2. Copy your App ID from the app you just created
+3. Open your [`hooks.json`](./.slack/hooks.json) file under `/.slack/hooks.json` and add a `start` hook:
+```json
+{
+  "hooks": {
+    "get-hooks": "npx -q --no-install -p @slack/cli-hooks slack-cli-get-hooks",
+    "start": "pnpm dev"
+  }
+}
+```
+4. Open your [`config.json`](./.slack/config.json) file under `/.slack/config.json` and update your manifest source to `local`.
+```json
+{
+  "manifest": {
+    "source": "local"
+  },
+  "project_id": "532d5129-2ac9-4605-a109-33b93e3f7472"
+}
+```
+5. Start your local server with automatic tunneling using the `pnpm dev:tunnel` command. You can also use the generic `slack run` command if you do not want automatic tunneling and manifest updates.
 
-`npm start`
+6. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`. 
 
 ## Project Structure
 
-### `manifest.json`
+### [`manifest.json`](./manifest.json)
 
-`manifest.json` is a configuration for Slack apps. With a manifest, you can create an app with a pre-defined configuration, or adjust the configuration of an existing app.
+[`manifest.json`](./manifest.json) is a configuration for Slack apps. With a manifest, you can create an app with a pre-defined configuration, or adjust the configuration of an existing app.
 
-### `app.ts`
+### [`/src/app.ts`](./src/app.ts)
 
-`app.ts` is the entry point for the application and is the file you'll run to start the server. This project aims to keep this file as thin as possible, primarily using it as a way to route inbound requests.
+[`app.ts`](./src/app.ts) is the entry point of the application. This file is kept minimal and primarily serves to route inbound requests.
 
-### `/listeners`
+[`/src/listeners`](./src/listeners)
 
-Every incoming request is routed to a "listener". Inside this directory, we group each listener based on the Slack Platform feature used, so `/listeners/shortcuts` handles incoming [Shortcuts](https://api.slack.com/interactivity/shortcuts) requests, `/listeners/views` handles [View submissions](https://api.slack.com/reference/interaction-payloads/views#view_submission) and so on.
+Every incoming request is routed to a "listener". Inside this directory, we group each listener based on the Slack Platform feature used, so [`/listeners/shortcuts`](./src/listeners/shortcuts/index.ts) handles incoming [Shortcuts](https://api.slack.com/interactivity/shortcuts) requests, [`/listeners/views`](./src/listeners/views/index.ts) handles [View submissions](https://api.slack.com/reference/interaction-payloads/views#view_submission) and so on.
 
-## App Distribution / OAuth
+### [`/src/server`](./src/server)
 
-Only implement OAuth if you plan to distribute your application across multiple workspaces. A separate `app-oauth.ts` file can be found with relevant OAuth settings.
-
-When using OAuth, Slack requires a public URL where it can send requests. In this template app, we've used [`ngrok`](https://ngrok.com/download). Checkout [this guide](https://ngrok.com/docs#getting-started-expose) for setting it up.
-
-Start `ngrok` to access the app on an external network and create a redirect URL for OAuth.
-
-```
-ngrok http 3000
-```
-
-This output should include a forwarding address for `http` and `https` (we'll use `https`). It should look something like the following:
-
-```
-Forwarding   https://3cb89939.ngrok.io -> http://localhost:3000
-```
-
-Navigate to **OAuth & Permissions** in your app configuration and click **Add a Redirect URL**. The redirect URL should be set to your `ngrok` forwarding address with the `slack/oauth_redirect` path appended. For example:
-
-```
-https://3cb89939.ngrok.io/slack/oauth_redirect
-```
+This is your nitro server directory. Inside you have an [`api`](./src/server/api) folder that contains a [`events.post.ts`](./src/server/api/events.post.ts) file. This matches the request URL's defined in your [`manifest.json`](./manifest.json) file. Nitro uses file based routing for incoming requests. You can learn more about this [here](https://nitro.build/guide/routing).
