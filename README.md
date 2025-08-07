@@ -1,5 +1,5 @@
 # Bolt for Nitro Template App
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmalewis5%2Fbolt-nitro-starter-template&env=SLACK_SIGNING_SECRET,SLACK_BOT_TOKEN&envDescription=These%20environment%20variables%20are%20required%20to%20deploy%20your%20Slack%20App.&envLink=https%3A%2F%2Fapi.slack.com%2Fapps&project-name=slackbot-with-bolt&repository-name=slackbot-with-bolt)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmalewis5%2Fbolt-nitro-starter-template&env=SLACK_SIGNING_SECRET,SLACK_BOT_TOKEN&envDescription=These%20environment%20variables%20are%20required%20to%20deploy%20your%20Slack%20App.&envLink=https%3A%2F%2Fapi.slack.com%2Fapps&project-name=slackbot-with-nitro&repository-name=slackbot-with-nitro)
 
 This is a generic Bolt for JavaScript (TypeScript) template app used to build out Slack apps with the Nitro framework.
 
