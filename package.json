@@ -1,5 +1,5 @@
 {
-  "name": "bolt-nitro-template",
+  "name": "slack-bolt-nitro-template",
   "version": "1.0.0",
   "description": "A Nitro template for Slack apps",
   "scripts": {
