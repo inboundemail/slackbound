@@ -1,3 +1,4 @@
+
 # Slack Bolt with Nitro Template App
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmalewis5%2Fbolt-nitro-starter-template&env=SLACK_SIGNING_SECRET,SLACK_BOT_TOKEN&envDescription=These%20environment%20variables%20are%20required%20to%20deploy%20your%20Slack%20App.&envLink=https%3A%2F%2Fapi.slack.com%2Fapps&project-name=slackbot-with-nitro&repository-name=slackbot-with-nitro)
 
@@ -55,7 +56,23 @@ This is a generic Bolt for JavaScript (TypeScript) template app used to build ou
 ```
 6. Start your local server with automatic tunneling using the `pnpm dev:tunnel` command. You can also use the generic `slack run` command if you do not want automatic tunneling and manifest updates. If prompted, select the workspace you'd like to grant access to. Select `yes` when asked _Update app settings with changes to the local manifest?_.
 
-7. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`. 
+7. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`.
+
+## Deploy to Vercel
+1. Create a new Vercel project [here](https://www.vercel.com/new) or select _Add new..._ and _project_ from the Vercel dashboard
+2. On the next screen, select *Import* next to your app repository but do *not* click _Deploy_
+3. Create a new Slack app for Production. Open [https://api.slack.com/apps/new](https://api.slack.com/apps/new) and choose "From an app manifest"
+4. Copy the contents of [manifest.json](./manifest.json) into the text box that says `*Paste your manifest code here*` (within the JSON tab) and click _Next_ and _Create_
+5. From the _Basic Information_ tab, copy your _Slack Signing Secret_ into the Environment Variables dropdown on your new Vercel project window as `SLACK_SIGNING_SECRET`
+6. On your Slack app window, open the _Install App_ tab on the left menu. Click _Install to <Workspace_Name>_ and _Allow_ on the screen that follows. Copy the _Bot User OAuth Token_
+7. Open your new Vercel project window and paste this value as `SLACK_BOT_TOKEN` in the environment variables dropdown
+8. Click _Deploy_
+9. Once the deployment is complete, click _Continue to Dashboard_
+10. Copy your production domain URL, seen under  _Domains_ on the _Overview_ tab
+11. Open your Slack app settings and click _App Manifest_
+12. Update the _url_ and _request_url_ fields of your App Manifest to the production domain. Make sure the `/api/events` path is preserved
+13. At the top of the page, you will be prompted to verify the new URL
+14. Your production app is now deployed and ready
 
 ## Project Structure
 
