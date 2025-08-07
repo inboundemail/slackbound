@@ -1,4 +1,4 @@
-# Bolt for JavaScript (TypeScript) Template App
+# Bolt for Nitro Template App
 
 This is a generic Bolt for JavaScript (TypeScript) template app used to build out Slack apps.
 
