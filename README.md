@@ -3,9 +3,20 @@
 
 This is a generic Bolt for JavaScript (TypeScript) template app used to build out Slack apps with the Nitro framework.
 
-Before getting started, make sure you have a development workspace where you have permissions to install apps. You can [create one here](https://slack.com/create) or use a [developer sandbox](https://api.slack.com/developer-program).
+## Prerequisites
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **pnpm** - This project uses pnpm as the package manager. Install with `npm install -g pnpm`
+- **Slack workspace** - You need a workspace where you have permission to install apps
+  - Create a new workspace [here](https://slack.com/create)
+  - Or use a Slack developer sandbox [here](https://api.slack.com/developer-program)
+- **Slack CLI** - [Installation guide](https://tools.slack.dev/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux)
+- **ngrok** - [Download here](https://ngrok.com/downloads)
 
 ## Installation
+#### Clone and initialize Slack App
+   ```bash
+   slack create --template https://github.com/vercel-partner-solutions/slack-bolt-nitro-template.git
+   ```
 
 #### Create a Slack App
 
@@ -22,7 +33,7 @@ Before getting started, make sure you have a development workspace where you hav
 1. In the terminal run `slack app link`
 2. Copy your App ID from the app you just created
 3. Select `Local` when prompted
-3. Open your [`hooks.json`](./.slack/hooks.json) file under `/.slack/hooks.json` and add a `start` hook:
+4. Open your [`hooks.json`](./.slack/hooks.json) file under `/.slack/hooks.json` and add a `start` hook:
 ```json
 {
   "hooks": {
@@ -31,7 +42,7 @@ Before getting started, make sure you have a development workspace where you hav
   }
 }
 ```
-4. Open your [`config.json`](./.slack/config.json) file under `/.slack/config.json` and update your manifest source to `local`.
+5. Open your [`config.json`](./.slack/config.json) file under `/.slack/config.json` and update your manifest source to `local`.
 ```json
 {
   "manifest": {
@@ -40,9 +51,9 @@ Before getting started, make sure you have a development workspace where you hav
   "project_id": "<project-id-added-by-slack-cli>"
 }
 ```
-5. Start your local server with automatic tunneling using the `pnpm dev:tunnel` command. You can also use the generic `slack run` command if you do not want automatic tunneling and manifest updates. If prompted, select the workspace you'd like to grant access to. Select `yes` when asked _Update app settings with changes to the local manifest?_.
+6. Start your local server with automatic tunneling using the `pnpm dev:tunnel` command. You can also use the generic `slack run` command if you do not want automatic tunneling and manifest updates. If prompted, select the workspace you'd like to grant access to. Select `yes` when asked _Update app settings with changes to the local manifest?_.
 
-6. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`. 
+7. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`. 
 
 ## Project Structure
 
