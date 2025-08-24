@@ -20,10 +20,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/malewis5/bolt-nitro-starter-template"
+    "url": "https://github.com/vercel-partner-solutions/slack-bolt-nitro-template"
   },
   "bugs": {
-    "url": "https://github.com/malewis5/bolt-nitro-starter-template/issues"
+    "url": "https://github.com/vercel-partner-solutions/slack-bolt-nitro-template/issues"
   },
   "dependencies": {
     "@slack/bolt": "^4.4.0",
