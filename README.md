@@ -5,7 +5,7 @@
 This is a generic Bolt for JavaScript (TypeScript) template app used to build out Slack apps with the Nitro framework.
 
 ## Prerequisites
-- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **Node.js 20+** - [Download here](https://nodejs.org/)
 - **pnpm** - This project uses pnpm as the package manager. Install with `npm install -g pnpm`
 - **Slack workspace** - You need a workspace where you have permission to install apps
   - Create a new workspace [here](https://slack.com/create)
@@ -45,7 +45,7 @@ This is a generic Bolt for JavaScript (TypeScript) template app used to build ou
   }
 }
 ```
-5. Open your [`config.json`](./.slack/config.json) file under `/.slack/config.json` and update your manifest source to `local`.
+6. Open your [`config.json`](./.slack/config.json) file under `/.slack/config.json` and update your manifest source to `local`.
 ```json
 {
   "manifest": {
@@ -54,9 +54,9 @@ This is a generic Bolt for JavaScript (TypeScript) template app used to build ou
   "project_id": "<project-id-added-by-slack-cli>"
 }
 ```
-6. Start your local server with automatic tunneling using the `pnpm dev:tunnel` command. You can also use the generic `slack run` command if you do not want automatic tunneling and manifest updates. If prompted, select the workspace you'd like to grant access to. Select `yes` when asked _Update app settings with changes to the local manifest?_.
+7. Start your local server with automatic tunneling using the `pnpm dev:tunnel` command. You can also use the generic `slack run` command if you do not want automatic tunneling and manifest updates. If prompted, select the workspace you'd like to grant access to. Select `yes` when asked _Update app settings with changes to the local manifest?_.
 
-7. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`.
+8. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`.
 
 ## Deploy to Vercel
 1. Create a new Vercel project [here](https://www.vercel.com/new) or select _Add new..._ and _project_ from the Vercel dashboard
