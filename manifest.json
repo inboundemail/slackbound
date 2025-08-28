@@ -4,7 +4,7 @@
     "minor_version": 1
   },
   "display_information": {
-    "name": "your-app-name"
+    "name": "slack-bolt-with-nitro"
   },
   "features": {
     "app_home": {
@@ -13,7 +13,7 @@
       "messages_tab_read_only_enabled": true
     },
     "bot_user": {
-      "display_name": "your-app-name",
+      "display_name": "slack-bolt-with-nitro",
       "always_online": true
     },
     "shortcuts": [
@@ -29,30 +29,23 @@
         "command": "/sample-command",
         "description": "Runs a sample command",
         "should_escape": false,
-        "url": "https://your-app-name.vercel.app/api/events"
+        "url": "https://<your-domain>/api/slack/events"
       }
     ]
   },
   "oauth_config": {
     "scopes": {
-      "bot": [
-        "channels:history",
-        "chat:write",
-        "commands"
-      ]
+      "bot": ["channels:history", "chat:write", "commands"]
     }
   },
   "settings": {
     "event_subscriptions": {
-      "request_url": "https://your-app-name.vercel.app/api/events",
-      "bot_events": [
-        "app_home_opened",
-        "message.channels"
-      ]
+      "request_url": "https://<your-domain>/api/slack/events",
+      "bot_events": ["app_home_opened", "message.channels"]
     },
     "interactivity": {
       "is_enabled": true,
-      "request_url": "https://your-app-name.vercel.app/api/events"
+      "request_url": "https://<your-domain>/api/slack/events"
     },
     "org_deploy_enabled": true,
     "socket_mode_enabled": false,

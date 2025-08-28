@@ -1,6 +1,6 @@
 import { createHandler } from '@vercel/slack-bolt';
 import { eventHandler, toWebRequest } from 'h3';
-import { app, receiver } from '../../app';
+import { app, receiver } from '../../../bolt/app';
 
 const handler = createHandler(app, receiver);
 
