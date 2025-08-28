@@ -26,7 +26,7 @@ const getDevPort = async (): Promise<number> => {
 
   // Check package.json dev script for --port flag
   try {
-    const packageJson = JSON.parse(await fs.readFile("package.json", "utf-8"));
+    const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'));
     const devScript = packageJson.scripts?.dev;
     if (devScript) {
       const portMatch = devScript.match(/--port\s+(\d+)/);
@@ -45,8 +45,8 @@ const getDevPort = async (): Promise<number> => {
 };
 
 const isManifestConfigLocal = async (): Promise<boolean> => {
-  const manifest = JSON.parse(await fs.readFile(MANIFEST_CONFIG_PATH, "utf-8"));
-  return manifest?.manifest?.source === "local";
+  const manifest = JSON.parse(await fs.readFile(MANIFEST_CONFIG_PATH, 'utf-8'));
+  return manifest?.manifest?.source === 'local';
 };
 
 const startNgrok = async (): Promise<ngrok.Listener> => {
@@ -60,9 +60,7 @@ const backupManifest = async (manifestContent: string): Promise<void> => {
   try {
     await fs.writeFile(TEMP_MANIFEST_PATH, manifestContent);
   } catch (error) {
-    throw new Error(
-      `Failed to backup manifest: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    throw new Error(`Failed to backup manifest: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -76,12 +74,10 @@ const removeTempManifest = async (): Promise<void> => {
 
 const restoreManifest = async (): Promise<void> => {
   try {
-    const manifest = await fs.readFile(TEMP_MANIFEST_PATH, "utf-8");
+    const manifest = await fs.readFile(TEMP_MANIFEST_PATH, 'utf-8');
     await fs.writeFile(MANIFEST_PATH, manifest);
   } catch (error) {
-    throw new Error(
-      `Failed to restore manifest: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    throw new Error(`Failed to restore manifest: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -106,13 +102,11 @@ const updateManifestUrls = (manifest: SlackManifest, newUrl: string): void => {
   manifest.settings.interactivity.request_url = newUrl;
 };
 
-const updateManifest = async (
-  url: string | null,
-): Promise<ManifestUpdateResult> => {
-  if (!url) return { updated: false, originalContent: "" };
+const updateManifest = async (url: string | null): Promise<ManifestUpdateResult> => {
+  if (!url) return { updated: false, originalContent: '' };
 
   try {
-    const file = await fs.readFile(MANIFEST_PATH, "utf-8");
+    const file = await fs.readFile(MANIFEST_PATH, 'utf-8');
     const manifest: SlackManifest = JSON.parse(file);
 
     const newUrl = `${url}${SLACK_EVENTS_PATH}`;
@@ -120,7 +114,7 @@ const updateManifest = async (
 
     // Skip if URL hasn't changed
     if (currentUrl === newUrl) {
-      return { updated: false, originalContent: "" };
+      return { updated: false, originalContent: '' };
     }
 
     updateManifestUrls(manifest, newUrl);
@@ -128,9 +122,7 @@ const updateManifest = async (
     await fs.writeFile(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
     return { updated: true, originalContent: file };
   } catch (error) {
-    throw new Error(
-      `Failed to update manifest: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    throw new Error(`Failed to update manifest: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -182,7 +174,7 @@ const main = async () => {
 
     // Keep the script running while pnpm dev is active
     await new Promise<void>((resolve) => {
-      devProcess.on("exit", () => {
+      devProcess.on('exit', () => {
         resolve();
       });
     });
