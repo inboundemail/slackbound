@@ -1,51 +1,30 @@
+# Slack Bolt with Nitro Template
 
-# Slack Bolt with Nitro Template App
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-description=This%20is%20a%20generic%20Bolt%20for%20JavaScript%20(TypeScript)%20template%20app%20used%20to%20build%20out%20Slack%20apps%20with%20the%20Nitro%20framework.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2FSs9t7RkKlPtProrbDhZFM%2F0d11b9095ecf84c87a68fbdef6f12ad1%2FFrame__1_.png&demo-title=Slack%20Bolt%20with%20Nitro&demo-url=https%3A%2F%2Fgithub.com%2Fvercel-partner-solutions%2Fslack-bolt-with-nitro&env=SLACK_SIGNING_SECRET%2CSLACK_BOT_TOKEN&envDescription=These%20environment%20variables%20are%20required%20to%20deploy%20your%20Slack%20app%20to%20Vercel&envLink=https%3A%2F%2Fapi.slack.com%2Fapps&from=templates&project-name=Slack%20Bolt%20with%20Nitro&repository-name=slack-bolt-with-nitro&repository-url=https%3A%2F%2Fgithub.com%2Fvercel-partner-solutions%2Fslack-bolt-with-nitro&skippable-integrations=1&teamSlug=vercel-partnerships)
 
-This is a generic Bolt for JavaScript (TypeScript) template app used to build out Slack apps with the Nitro framework.
+This is a generic Bolt for JavaScript (TypeScript) template app used to build Slack apps with Nitro
 
-## Prerequisites
-- **Node.js 20+** - [Download here](https://nodejs.org/)
-- **pnpm** - This project uses pnpm as the package manager. Install with `npm install -g pnpm`
-- **Slack workspace** - You need a workspace where you have permission to install apps
-  - Create a new workspace [here](https://slack.com/create)
-  - Or use a Slack developer sandbox [here](https://api.slack.com/developer-program)
-- **Slack CLI** - [Installation guide](https://tools.slack.dev/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux)
-- **ngrok** - [Download here](https://ngrok.com/downloads)
+Before getting started, make sure you have a development workspace where you have permissions to install apps. You can use a [developer sandbox](https://api.slack.com/developer-program) or [create a workspace](https://slack.com/create)
 
 ## Installation
-#### Clone and initialize Slack App
-   ```bash
-   slack create --template https://github.com/vercel-partner-solutions/slack-bolt-nitro-template.git
-   ```
 
 #### Create a Slack App
 
-1. Open [https://api.slack.com/apps/new](https://api.slack.com/apps/new) and choose "From an app manifest"
-2. Choose the workspace you want to install the application to
-3. Copy the contents of [manifest.json](./manifest.json) into the text box that says `*Paste your manifest code here*` (within the JSON tab) and click _Next_
-4. Review the configuration and click _Create_
-5. From the _Basic Information_ tab, copy your _Slack Signing Secret_ into your `.env` file under `SLACK_SIGNING_SECRET`.
-6. Open the _Install App_ tab on the left menu. Click _Install to <Workspace_Name>_ and _Allow_ on the screen that follows.
-7. On the following screen, copy the _Bot User OAuth Token_ into your `.env` file under `SLACK_BOT_TOKEN`.
-
+1. Open https://api.slack.com/apps/new and choose "From an app manifest"
+2. Choose the workspace you want to use
+3. Copy the contents of [`manifest.json`](./manifest.json) into the text box that says "Paste your manifest code here" (JSON tab) and click Next
+4. Review the configuration and click Create
+5. On the Install App tab, click Install to <Workspace_Name>. 
+      - You will be redirected to the App Configuration dashboard
+6. Copy the Bot User OAuth Token into your environment as `SLACK_BOT_TOKEN`
+7. On the Basic Information tab, copy your Signing Secret into your environment as `SLACK_SIGNING_SECRET`
 
 #### Prepare for Local Development
 
 1. In the terminal run `slack app link`
-2. Select your Slack team in the terminal
-3. Copy your App ID from the app you just created
-4. Select `Local` when prompted
-5. Open your [`hooks.json`](./.slack/hooks.json) file under `/.slack/hooks.json` and add a `start` hook:
-```json
-{
-  "hooks": {
-    "get-hooks": "npx -q --no-install -p @slack/cli-hooks slack-cli-get-hooks",
-    "start": "pnpm dev"
-  }
-}
-```
-6. Open your [`config.json`](./.slack/config.json) file under `/.slack/config.json` and update your manifest source to `local`.
+2. Copy your App ID from the app you just created
+3. Select `Local` when prompted
+4. Open [`.slack/config.json`](./.slack/config.json) and update your manifest source to `local`:
 ```json
 {
   "manifest": {
@@ -54,40 +33,43 @@ This is a generic Bolt for JavaScript (TypeScript) template app used to build ou
   "project_id": "<project-id-added-by-slack-cli>"
 }
 ```
-7. Start your local server with automatic tunneling using the `pnpm dev:tunnel` command. You can also use the generic `slack run` command if you do not want automatic tunneling and manifest updates. If prompted, select the workspace you'd like to grant access to. Select `yes` when asked _Update app settings with changes to the local manifest?_.
+5. Start your local server using `slack run`. If prompted, select the workspace you'd like to grant access to 
+- Select `yes` if asked "Update app settings with changes to the local manifest?"
 
-8. Open your Slack workspace and add your new Slackbot to a channel. Send the message `hi` and your Slackbot should respond with `hi, how are you?`.
+6. Open your Slack workspace, add your Slackbot to a channel, and send `hello`. Your app should reply with `world!`
 
 ## Deploy to Vercel
-1. Create a new Vercel project [here](https://www.vercel.com/new) or select _Add new..._ and _project_ from the Vercel dashboard
-2. On the next screen, select *Import* next to your app repository but do *not* click _Deploy_
-3. Create a new Slack app for Production. Open [https://api.slack.com/apps/new](https://api.slack.com/apps/new) and choose "From an app manifest"
-4. Copy the contents of [manifest.json](./manifest.json) into the text box that says `*Paste your manifest code here*` (within the JSON tab) and click _Next_ and _Create_
-5. From the _Basic Information_ tab, copy your _Slack Signing Secret_ into the Environment Variables dropdown on your new Vercel project window as `SLACK_SIGNING_SECRET`
-6. On your Slack app window, open the _Install App_ tab on the left menu. Click _Install to <Workspace_Name>_ and _Allow_ on the screen that follows. Copy the _Bot User OAuth Token_
-7. Open your new Vercel project window and paste this value as `SLACK_BOT_TOKEN` in the environment variables dropdown
-8. Click _Deploy_
-9. Once the deployment is complete, click _Continue to Dashboard_
-10. Copy your production domain URL, seen under  _Domains_ on the _Overview_ tab
-11. Open your Slack app settings and click _App Manifest_
-12. Update the _url_ and _request_url_ fields of your App Manifest to the production domain. Make sure the `/api/events` path is preserved
-13. At the top of the page, you will be prompted to verify the new URL
-14. Your production app is now deployed and ready
+
+1. Create a new Slack app for production following the steps from above
+2. Create a new Vercel project [here](https://vercel.com/new) and select this repo
+2. Copy the Bot User OAuth Token into your Vercel environment variables as `SLACK_BOT_TOKEN`
+3. On the Basic Information tab, copy your Signing Secret into your Vercel environment variables as `SLACK_SIGNING_SECRET`
+4. When your deployment has finished, open your App Manifest from the Slack App Dashboard
+5. Update the manifest so all the `request_url` and `url` fields use `https://<your-app-domain>/api/slack/events`
+6. Click save and you will be prompted to verify the URL
+7. Open your Slack workspace and add your app to any channel
+    - _Note_: Make sure you add the production app, not the local app we setup earlier
+8. Send `hello` and your app will respond with `world!`
+9. Your app will now automatically build and deploy whenever you commit to your repo. More information [here](https://vercel.com/docs/git)
+
 
 ## Project Structure
 
 ### [`manifest.json`](./manifest.json)
 
-[`manifest.json`](./manifest.json) is a configuration for Slack apps. With a manifest, you can create an app with a pre-defined configuration, or adjust the configuration of an existing app.
+[`manifest.json`](./manifest.json) defines your Slack app's configuration. With a manifest, you can create or update an app with a pre-defined configuration
 
-### [`/src/app.ts`](./src/app.ts)
+### [`src/bolt/app.ts`](./src/bolt/app.ts)
 
-[`app.ts`](./src/app.ts) is the entry point of the application. This file is kept minimal and primarily serves to route inbound requests.
+This is the Bolt app entry. It initializes `@vercel/slack-bolt`'s `VercelReceiver` and registers listeners
 
-[`/src/listeners`](./src/listeners)
+### [`src/bolt/listeners`](./src/bolt/listeners)
 
-Every incoming request is routed to a "listener". Inside this directory, we group each listener based on the Slack Platform feature used, so [`/listeners/shortcuts`](./src/listeners/shortcuts/index.ts) handles incoming [Shortcuts](https://api.slack.com/interactivity/shortcuts) requests, [`/listeners/views`](./src/listeners/views/index.ts) handles [View submissions](https://api.slack.com/reference/interaction-payloads/views#view_submission) and so on.
+Every incoming request is routed to a "listener". Inside this directory, we group each listener by Slack Platform feature, e.g. [`messages`](./src/bolt/listeners/messages) for message events
 
-### [`/src/server`](./src/server)
+### Route Handler: [`src/server/api/slack/events.post.ts`](./src/server/api/slack/events.post.ts)
 
-This is your nitro server directory. Inside you have an [`api`](./src/server/api) folder that contains a [`events.post.ts`](./src/server/api/events.post.ts) file. This matches the request URL's defined in your [`manifest.json`](./manifest.json) file. Nitro uses file based routing for incoming requests. You can learn more about this [here](https://nitro.build/guide/routing).
+This file defines your POST request handler that receives Slack events. Its pathname matches the URLs defined in your [`manifest.json`](./manifest.json). Learn more about Hono routing [here](https://nitro.build/guide/routing)
+
+## Custom Scripts
+- `pnpm dev:tunnel`: A helper script to automatically start your Slack app with ngrok tunneling
