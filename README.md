@@ -30,7 +30,7 @@ git clone https://github.com/vercel-partner-solutions/slack-bolt-with-nitro.git 
 2. If prompted `update the manifest source to remote` select `yes`
 3. Copy your App ID from the app you just created
 4. Select `Local` when prompted
-5. Open [`.slack/config.json`](./.slack/config.json) and update your manifest source to `local`:
+5. Open [`.slack/config.json`](./.slack/config.json) and update your manifest source to `local`
 ```json
 {
   "manifest": {
