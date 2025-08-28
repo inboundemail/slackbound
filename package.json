@@ -1,7 +1,6 @@
 {
-  "name": "slack-bolt-nitro-template",
+  "name": "slack-bolt-with-nitro",
   "version": "1.0.0",
-  "description": "A Nitro template for Slack apps",
   "scripts": {
     "build": "nitro build",
     "dev": "nitro dev",
@@ -15,16 +14,8 @@
     "slack",
     "bolt",
     "vercel",
-    "typescript",
     "nitro"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vercel-partner-solutions/slack-bolt-nitro-template"
-  },
-  "bugs": {
-    "url": "https://github.com/vercel-partner-solutions/slack-bolt-nitro-template/issues"
-  },
   "dependencies": {
     "@slack/bolt": "^4.4.0",
     "@vercel/slack-bolt": "^0.1.2"
