@@ -6,14 +6,14 @@ This is a generic Bolt for JavaScript (TypeScript) template app used to build Sl
 
 Before getting started, make sure you have a development workspace where you have permissions to install apps. You can use a [developer sandbox](https://api.slack.com/developer-program) or [create a workspace](https://slack.com/create)
 
-## Installation
+## Getting Started
 
-#### Clone and install dependencies
+### Clone and install dependencies
 ```bash
 git clone https://github.com/vercel-partner-solutions/slack-bolt-with-nitro.git && cd slack-bolt-with-nitro && pnpm install
 ```
 
-#### Create a Slack App
+### Create a Slack App
 
 1. Open https://api.slack.com/apps/new and choose "From an app manifest"
 2. Choose the workspace you want to use
@@ -24,7 +24,7 @@ git clone https://github.com/vercel-partner-solutions/slack-bolt-with-nitro.git 
 6. Copy the Bot User OAuth Token into your environment as `SLACK_BOT_TOKEN`
 7. On the Basic Information tab, copy your Signing Secret into your environment as `SLACK_SIGNING_SECRET`
 
-#### Prepare for Local Development
+### Prepare for Local Development
 
 1. In the terminal run `slack app link`
 2. If prompted `update the manifest source to remote` select `yes`
