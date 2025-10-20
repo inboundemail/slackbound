@@ -1,0 +1,139 @@
+---
+globs: src/server/api/inbound.post.ts,src/bolt/utils/config.ts
+description: Inbound.new email integration guide
+---
+
+# Inbound.new Email Integration
+
+## Overview
+
+This app integrates with [inbound.new](https://inbound.new) to receive emails via webhooks and post them to Slack channels.
+
+## Architecture
+
+### Webhook Endpoint
+**File**: [src/server/api/inbound.post.ts](mdc:src/server/api/inbound.post.ts)
+
+This Nitro API endpoint:
+1. Receives POST requests from inbound.new at `/api/inbound`
+2. Parses the `InboundWebhookPayload` from the request body
+3. Formats the email data into Slack Block Kit messages
+4. Posts to the configured Slack channel
+
+### Configuration
+**File**: [src/bolt/utils/config.ts](mdc:src/bolt/utils/config.ts)
+
+Configuration utilities for:
+- `getInboundEmailChannelId()` - Returns the Slack channel ID for posting emails
+- `getInboundApiKey()` - Returns the inbound.new API key
+
+## Webhook Payload
+
+The webhook receives a fully-typed `InboundWebhookPayload` from `@inboundemail/sdk`:
+
+```typescript
+import type { InboundWebhookPayload } from '@inboundemail/sdk';
+
+const payload: InboundWebhookPayload = {
+  event: 'email.received',
+  email: {
+    id: 'email_abc123',
+    messageId: '<unique@example.com>',
+    from: { addresses: [...] },
+    to: { addresses: [...] },
+    subject: 'Email subject',
+    parsedData: {
+      textBody: 'Email text content',
+      htmlBody: '<p>Email HTML content</p>',
+      attachments: [...]
+    }
+  }
+}
+```
+
+See full payload structure at: https://docs.inbound.new/webhook
+
+## Slack Message Format
+
+Emails are formatted as simple messages with:
+
+```
+**Subject Line**
+Email body text...
+```
+
+The format is intentionally minimal - just the subject in bold followed by the message content.
+
+### Bot Appearance Customization
+
+The bot's display name and icon are customized for each email:
+- **Username**: Shows as the sender's name (e.g., "John Doe")
+- **Icon**: Email emoji (📧)
+
+This requires the `chat:write.customize` scope in your manifest.
+
+## Environment Variables
+
+Required:
+- `SLACK_BOT_TOKEN` - Slack bot user OAuth token
+- `SLACK_SIGNING_SECRET` - Slack app signing secret
+- `INBOUND_API_KEY` - Inbound.new API key
+
+Optional:
+- `INBOUND_SLACK_CHANNEL_ID` - Slack channel ID for emails (defaults to `C085A8KPY66` for #slackbound-testing)
+
+## Setup Instructions
+
+1. **Configure inbound.new**:
+   - Create an email address: `slack@inbound.new`
+   - Set webhook URL to your app's `/api/inbound` endpoint
+   - Add `INBOUND_API_KEY` to environment
+
+2. **Configure Slack channel**:
+   - Get your channel ID from Slack
+   - Set `INBOUND_SLACK_CHANNEL_ID` environment variable
+   - Or leave unset to use default channel
+
+3. **Test the integration**:
+   - Send an email to `slack@inbound.new`
+   - Check your Slack channel for the formatted message
+
+## Extending the Integration
+
+### Adding Reply Functionality
+
+To add email reply capabilities:
+1. Add action buttons to the Slack message blocks
+2. Create action handlers in `src/bolt/listeners/actions/`
+3. Use inbound.new's [Send Email API](https://docs.inbound.new/send-email) to send replies
+
+### Downloading Attachments
+
+Attachments include `downloadUrl` fields:
+
+```typescript
+for (const attachment of email.parsedData.attachments) {
+  const response = await fetch(attachment.downloadUrl, {
+    headers: {
+      'Authorization': `Bearer ${process.env.INBOUND_API_KEY}`
+    }
+  });
+  const fileBuffer = await response.arrayBuffer();
+  // Process attachment...
+}
+```
+
+### Channel Configuration
+
+To make the channel configurable via slash command:
+1. Create a new command handler in `src/bolt/listeners/commands/`
+2. Store channel preference in a database or environment variable
+3. Update `getInboundEmailChannelId()` to read from storage
+
+## Error Handling
+
+The webhook handler:
+- Catches all errors and logs them
+- Returns success/failure status
+- Doesn't throw errors (prevents webhook retries)
+- Uses safe fallbacks for missing data

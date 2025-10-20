@@ -1,0 +1,62 @@
+---
+globs: src/server/**/*.ts
+---
+
+# Nitro API Routes
+
+## Route File Convention
+
+Routes in `src/server/api/` follow Nitro's file-based routing:
+
+- File name pattern: `{route}.{method}.ts`
+- Example: `events.post.ts` → POST /api/slack/events
+- Example: `status.get.ts` → GET /api/slack/status
+
+## Event Handler Pattern
+
+Use `eventHandler` from h3 and `toWebRequest` for compatibility:
+
+```typescript
+import { eventHandler, toWebRequest } from 'h3';
+
+export default eventHandler(async (event) => {
+  const request = toWebRequest(event);
+  // Handle request
+  return response;
+});
+```
+
+## Slack Integration
+
+The main Slack events endpoint [events.post.ts](mdc:src/server/api/slack/events.post.ts) uses:
+
+```typescript
+import { createHandler } from '@vercel/slack-bolt';
+import { app, receiver } from '../../../bolt/app';
+
+const handler = createHandler(app, receiver);
+
+export default eventHandler(async (event) => {
+  const request = toWebRequest(event);
+  return await handler(request);
+});
+```
+
+## Configuration
+
+[nitro.config.ts](mdc:nitro.config.ts) sets:
+- `srcDir: 'src/server'` - Server code location
+- `imports: false` - Disables auto-imports
+- `compatibilityDate: 'latest'` - Latest compatibility features
+
+## Development
+
+- `pnpm dev` - Start Nitro dev server
+- `pnpm dev:tunnel` - Start with ngrok tunnel for Slack testing
+- `pnpm build` - Build for production
+
+## Adding New Routes
+
+1. Create file in `src/server/api/` with pattern `{name}.{method}.ts`
+2. Export default `eventHandler`
+3. Route is automatically available at `/api/{path}`

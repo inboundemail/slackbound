@@ -1,0 +1,224 @@
+---
+globs: src/bolt/listeners/shortcuts/**/*.ts
+description: Slack Shortcuts implementation guide
+---
+
+# Slack Shortcuts Guide
+
+## What are Shortcuts?
+
+Shortcuts are quick actions users can trigger from within Slack. There are two types:
+
+### 1. Global Shortcuts (⚡)
+- Accessed via the lightning bolt button in the message compose box or search
+- Trigger app functionality from anywhere
+- Example: "Compose Email" - opens a modal to create a new email
+
+### 2. Message Shortcuts
+- Right-click context menu actions on any message
+- Work with the specific message content
+- Examples: "Forward to Email" - forward a message as an email
+
+## Configuration
+
+Shortcuts are defined in [manifest.json](mdc:manifest.json) and [manifest_dev.json](mdc:manifest_dev.json):
+
+```json
+{
+  "features": {
+    "shortcuts": [
+      {
+        "name": "Compose Email",
+        "type": "global",
+        "callback_id": "compose_email_shortcut",
+        "description": "Quickly compose a new email"
+      },
+      {
+        "name": "Forward to Email",
+        "type": "message",
+        "callback_id": "forward_message_to_email",
+        "description": "Forward this message as an email"
+      }
+    ]
+  }
+}
+```
+
+## Implementation Pattern
+
+### Global Shortcut Structure
+
+```typescript
+import type { AllMiddlewareArgs, SlackShortcutMiddlewareArgs } from '@slack/bolt';
+
+const myShortcut = async ({
+  ack,
+  client,
+  shortcut,
+  logger,
+}: AllMiddlewareArgs & SlackShortcutMiddlewareArgs) => {
+  try {
+    await ack();
+
+    // Open a modal
+    await client.views.open({
+      trigger_id: shortcut.trigger_id,
+      view: { /* modal definition */ }
+    });
+  } catch (error) {
+    logger.error(error);
+  }
+};
+
+export default myShortcut;
+```
+
+### Message Shortcut Structure
+
+```typescript
+const messageShortcut = async ({
+  ack,
+  client,
+  shortcut,
+  logger,
+}: AllMiddlewareArgs & SlackShortcutMiddlewareArgs) => {
+  try {
+    await ack();
+
+    // Type guard for message shortcuts
+    if (shortcut.type !== 'message_action') {
+      logger.warn('Expected message_action shortcut type');
+      return;
+    }
+
+    // Access message data
+    const message = shortcut.message;
+    const messageText = message.text || '';
+    const messageUser = message.user;
+    const channelId = shortcut.channel.id;
+
+    // Store context for later use
+    const metadata = JSON.stringify({
+      channel_id: channelId,
+      message_ts: message.ts,
+    });
+
+    await client.views.open({
+      trigger_id: shortcut.trigger_id,
+      view: {
+        callback_id: 'my_view',
+        private_metadata: metadata,
+        // ... view definition
+      }
+    });
+  } catch (error) {
+    logger.error(error);
+  }
+};
+```
+
+## Registration
+
+Register in [src/bolt/listeners/shortcuts/index.ts](mdc:src/bolt/listeners/shortcuts/index.ts):
+
+```typescript
+import type { App } from '@slack/bolt';
+import myShortcut from './my-shortcut';
+
+const register = (app: App) => {
+  app.shortcut('my_shortcut_callback_id', myShortcut);
+};
+
+export default { register };
+```
+
+## Message Shortcut Features
+
+### Accessing Message Data
+
+```typescript
+if (shortcut.type === 'message_action') {
+  const messageText = shortcut.message.text;
+  const messageUser = shortcut.message.user;
+  const messageTs = shortcut.message.ts;
+  const threadTs = shortcut.message.thread_ts;
+  const channelId = shortcut.channel.id;
+}
+```
+
+### Fetching Thread Context
+
+```typescript
+if (message.thread_ts) {
+  const replies = await client.conversations.replies({
+    channel: channelId,
+    ts: message.thread_ts,
+    limit: 10,
+  });
+  const messageCount = replies.messages?.length || 0;
+}
+```
+
+### Getting User Information
+
+```typescript
+const userInfo = await client.users.info({ user: messageUser });
+const userName = userInfo.user?.real_name || userInfo.user?.name;
+```
+
+## View Submission Handlers
+
+Each modal needs a corresponding view handler in [src/bolt/listeners/views/](mdc:src/bolt/listeners/views/):
+
+```typescript
+const viewCallback = async ({
+  ack,
+  view,
+  client,
+  body,
+  logger,
+}: AllMiddlewareArgs & SlackViewMiddlewareArgs) => {
+  try {
+    await ack();
+
+    // Extract form values
+    const value = view.state.values.block_id.action_id.value;
+
+    // Get metadata if stored
+    const metadata = view.private_metadata 
+      ? JSON.parse(view.private_metadata) 
+      : null;
+
+    // Process the submission
+    // ...
+  } catch (error) {
+    logger.error(error);
+  }
+};
+```
+
+## Current Shortcuts
+
+### 1. Compose Email (Global)
+- **File**: [compose-email.ts](mdc:src/bolt/listeners/shortcuts/compose-email.ts)
+- **View Handler**: [compose-email-view.ts](mdc:src/bolt/listeners/views/compose-email-view.ts)
+- Opens modal with To, Subject, and Message fields
+- Allows composing emails from anywhere in Slack
+
+### 2. Forward to Email (Message)
+- **File**: [forward-to-email.ts](mdc:src/bolt/listeners/shortcuts/forward-to-email.ts)
+- **View Handler**: [forward-email-view.ts](mdc:src/bolt/listeners/views/forward-email-view.ts)
+- Pre-fills modal with original message content
+- Includes user information and thread context
+- Stores original message metadata for reference
+
+## Best Practices
+
+1. Always call `await ack()` first (3-second deadline)
+2. Use type guards for message shortcuts (`shortcut.type === 'message_action'`)
+3. Store context in `private_metadata` for view submissions
+4. Use `trigger_id` to open modals
+5. Provide clear descriptions in the manifest
+6. Use descriptive `callback_id` names that match between manifest and code
+7. Handle errors gracefully with try-catch blocks
+8. Fetch additional context (user info, threads) when helpful

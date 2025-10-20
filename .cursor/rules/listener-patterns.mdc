@@ -1,0 +1,82 @@
+---
+globs: src/bolt/listeners/**/*.ts
+---
+
+# Listener Implementation Patterns
+
+## Adding New Listeners
+
+### 1. Create Handler File
+
+Create a new file in the appropriate category folder (actions, commands, events, etc.):
+
+```typescript
+import type { AllMiddlewareArgs, SlackCommandMiddlewareArgs } from '@slack/bolt';
+
+const myNewHandler = async ({ ack, respond, logger }: AllMiddlewareArgs & SlackCommandMiddlewareArgs) => {
+  try {
+    await ack();
+    await respond('Response message');
+  } catch (error) {
+    logger.error(error);
+  }
+};
+
+export default myNewHandler;
+```
+
+### 2. Register in Category Index
+
+Add to the category's `index.ts`:
+
+```typescript
+import myNewHandler from './my-new-handler';
+
+const register = (app: App) => {
+  app.command('/my-new-command', myNewHandler);
+};
+```
+
+### 3. Registration Already Handled
+
+The category is already registered in [src/bolt/listeners/index.ts](mdc:src/bolt/listeners/index.ts), so no further changes needed.
+
+## Listener Types
+
+### Commands (`/commands`)
+- Slash commands like `/hello`
+- Must acknowledge within 3 seconds
+- Use `app.command()`
+
+### Actions (`/actions`)
+- Interactive components (buttons, select menus, overflow menus, datepickers)
+- Identified by `action_id`
+- Use `app.action()`
+
+### Events (`/events`)
+- Workspace events (messages, reactions, app_home_opened, etc.)
+- Use `app.event()`
+- See [sample-command.ts](mdc:src/bolt/listeners/commands/sample-command.ts) for reference
+
+### Messages (`/messages`)
+- Message-specific patterns and keywords
+- Use `app.message()`
+
+### Shortcuts (`/shortcuts`)
+- Global shortcuts and message shortcuts
+- Identified by `callback_id`
+- Use `app.shortcut()`
+
+### Views (`/views`)
+- Modal submissions and closures
+- Identified by `callback_id`
+- Use `app.view()`
+
+## Best Practices
+
+1. Always call `await ack()` first
+2. Use try-catch with logger.error()
+3. Export handlers as default exports
+4. Use descriptive function names ending in "Callback"
+5. Keep handlers focused and single-purpose
+6. Extract complex logic into separate utility functions

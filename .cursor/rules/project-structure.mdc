@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+
+# SlackBound Project Structure
+
+This is a Slack app built with **Slack Bolt** framework and **Nitro** server framework.
+
+## Core Architecture
+
+- **[src/bolt/app.ts](mdc:src/bolt/app.ts)** - Main Bolt app initialization using VercelReceiver
+- **[src/server/api/slack/events.post.ts](mdc:src/server/api/slack/events.post.ts)** - Nitro API endpoint that handles Slack events
+- **[src/server/api/inbound.post.ts](mdc:src/server/api/inbound.post.ts)** - Nitro API endpoint that handles inbound.new email webhooks
+- **[src/bolt/listeners/index.ts](mdc:src/bolt/listeners/index.ts)** - Central registration point for all Slack listeners
+- **[src/bolt/utils/config.ts](mdc:src/bolt/utils/config.ts)** - Configuration utilities for app settings
+
+## Listener Organization
+
+All Slack event handlers are organized by type under `src/bolt/listeners/`:
+
+- **actions/** - Block Kit interactive component handlers (buttons, select menus, etc.)
+- **commands/** - Slash command handlers
+- **events/** - Workspace event handlers (app_home_opened, message events, etc.)
+- **messages/** - Message-specific event handlers
+- **shortcuts/** - Global and message shortcut handlers
+- **views/** - Modal view submission and close handlers
+
+Each listener category has:
+- An `index.ts` that exports a `register()` function
+- Individual handler files that export async callback functions
+
+## Configuration Files
+
+- **[nitro.config.ts](mdc:nitro.config.ts)** - Nitro server configuration (points to src/server)
+- **[tsconfig.json](mdc:tsconfig.json)** - TypeScript configuration with strict mode enabled
+- **[biome.json](mdc:biome.json)** - Biome linter/formatter configuration
+- **[package.json](mdc:package.json)** - Dependencies and scripts
+
+## Environment Variables
+
+Required:
+- `SLACK_BOT_TOKEN` - Bot user OAuth token
+- `SLACK_SIGNING_SECRET` - Slack app signing secret
+- `INBOUND_API_KEY` - Inbound.new API key for email integration
+
+Optional:
+- `INBOUND_SLACK_CHANNEL_ID` - Channel ID for email notifications (defaults to #slackbound-testing)
+- `NGROK_AUTH_TOKEN` - ngrok token for local development tunneling
+
+See [env.template](mdc:env.template) for a complete example.
+
+## Development Workflow
+
+1. Add new listener files in the appropriate category folder
+2. Register them in the category's `index.ts`
+3. The registration flows: category index → main listeners/index.ts → app.ts

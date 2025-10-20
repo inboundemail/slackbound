@@ -1,0 +1,72 @@
+---
+globs: *.ts,*.tsx
+---
+
+# TypeScript Conventions
+
+## Configuration
+
+This project uses strict TypeScript settings from [tsconfig.json](mdc:tsconfig.json):
+
+- `strict: true` - All strict type-checking options enabled
+- `noImplicitReturns: true` - Functions must explicitly return values
+- `noFallthroughCasesInSwitch: true` - Switch cases must have break/return
+- `noUnusedLocals: true` - Unused variables are errors
+- `useUnknownInCatchVariables: true` - Catch variables are `unknown` by default
+
+## Import Style
+
+Use ES module imports with type imports:
+
+```typescript
+import type { App } from '@slack/bolt';
+import pkg from '@slack/bolt';
+
+const { App } = pkg; // For default imports that need destructuring
+```
+
+## Async/Await
+
+Always use async/await for asynchronous operations:
+
+```typescript
+const handler = async ({ ack, respond }: Args) => {
+  await ack();
+  await respond('Done');
+};
+```
+
+## Error Handling
+
+Always wrap async operations in try-catch:
+
+```typescript
+try {
+  await ack();
+  // logic here
+} catch (error) {
+  logger.error(error);
+}
+```
+
+## Type Annotations
+
+- Use explicit type annotations for function parameters
+- Import types from `@slack/bolt` for Slack-specific types
+- Use `type` imports to distinguish types from values
+
+## Biome Integration
+
+This project uses Biome for linting and formatting:
+
+- Run `pnpm lint` to check code
+- Run `pnpm format` to auto-fix issues
+- Use `biome-ignore` comments sparingly and with justification:
+  ```typescript
+  // biome-ignore lint/style/noNonNullAssertion: view is guaranteed here
+  const viewId = body.view!.id;
+  ```
+
+## No Semicolons
+
+Follow the existing codebase pattern - semicolons are used consistently.

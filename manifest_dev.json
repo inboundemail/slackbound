@@ -4,7 +4,7 @@
     "minor_version": 1
   },
   "display_information": {
-    "name": "inbound"
+    "name": "inbound - dev"
   },
   "features": {
     "app_home": {
@@ -13,7 +13,7 @@
       "messages_tab_read_only_enabled": true
     },
     "bot_user": {
-      "display_name": "inbound",
+      "display_name": "inbound - dev",
       "always_online": true
     },
     "shortcuts": [
@@ -35,7 +35,7 @@
         "command": "/compose",
         "description": "Composes a new email",
         "should_escape": false,
-        "url": "https://inbound.new/api/slack/events"
+        "url": "https://dev.inbound.new/api/slack/events"
       }
     ]
   },
@@ -64,12 +64,12 @@
   },
   "settings": {
     "event_subscriptions": {
-      "request_url": "https://inbound.new/api/slack/events",
+      "request_url": "https://dev.inbound.new/api/slack/events",
       "bot_events": ["app_home_opened", "message.channels", "message.groups", "message.im", "message.mpim"]
     },
     "interactivity": {
       "is_enabled": true,
-      "request_url": "https://inbound.new/api/slack/events"
+      "request_url": "https://dev.inbound.new/api/slack/events"
     },
     "org_deploy_enabled": true,
     "socket_mode_enabled": false,

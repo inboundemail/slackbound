@@ -1,0 +1,66 @@
+---
+globs: src/bolt/**/*.ts
+---
+
+# Slack Bolt Patterns
+
+## Listener Callback Pattern
+
+All listener callbacks follow this structure:
+
+```typescript
+import type { AllMiddlewareArgs, SlackCommandMiddlewareArgs } from '@slack/bolt';
+
+const callbackName = async ({ ack, respond, client, body, logger }: AllMiddlewareArgs & SlackCommandMiddlewareArgs) => {
+  try {
+    await ack(); // ALWAYS acknowledge first
+    // Your logic here
+  } catch (error) {
+    logger.error(error);
+  }
+};
+
+export default callbackName;
+```
+
+## Common Middleware Args
+
+- `ack()` - MUST be called first to acknowledge the request (3-second deadline)
+- `respond()` - Send a response to the user
+- `client` - Web API client for making Slack API calls
+- `body` - The incoming event payload
+- `logger` - Logger instance for error tracking
+- `say()` - Send a message to the channel (events only)
+
+## Registration Pattern
+
+In each category's `index.ts`:
+
+```typescript
+import type { App } from '@slack/bolt';
+import myHandler from './my-handler';
+
+const register = (app: App) => {
+  app.command('/my-command', myHandler);
+  // or app.action(), app.event(), app.view(), app.shortcut()
+};
+
+export default { register };
+```
+
+## Block Kit Views
+
+When working with modals or messages:
+- Use proper TypeScript types from `@slack/bolt`
+- Follow Block Kit Builder patterns
+- Handle `view` property carefully (it may be undefined for non-modal contexts)
+- Use `biome-ignore` comments when non-null assertions are necessary
+
+## Type Safety
+
+Always import specific types from `@slack/bolt`:
+- `SlackCommandMiddlewareArgs`
+- `SlackActionMiddlewareArgs<BlockAction>`
+- `SlackEventMiddlewareArgs<'app_home_opened'>`
+- `SlackViewMiddlewareArgs`
+- `SlackShortcutMiddlewareArgs`

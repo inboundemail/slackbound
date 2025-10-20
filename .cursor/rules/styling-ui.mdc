@@ -1,0 +1,45 @@
+---
+globs: *.tsx,*.jsx
+description: Styling and UI guidelines for React components
+---
+
+# Styling and UI Guidelines
+
+## Tailwind CSS
+
+Always use valid Tailwind CSS classes for styling React and JSX pages:
+
+```tsx
+<div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md">
+  <h2 className="text-xl font-semibold text-gray-900">Title</h2>
+  <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+    Click Me
+  </button>
+</div>
+```
+
+## Icons
+
+Request icons from **Nucleo** when needed. Do not use placeholder icon libraries.
+
+## Block Kit (Slack UI)
+
+For Slack interfaces, use Block Kit components:
+
+```typescript
+{
+  type: 'section',
+  text: {
+    type: 'mrkdwn',
+    text: '*Bold text* and _italic text_'
+  }
+}
+```
+
+## Best Practices
+
+1. Use semantic HTML elements
+2. Follow responsive design patterns with Tailwind breakpoints
+3. Maintain consistent spacing and typography
+4. Use Tailwind's color palette for consistency
+5. Ensure accessibility with proper ARIA labels and semantic markup

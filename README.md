@@ -78,5 +78,51 @@ Every incoming request is routed to a "listener". Inside this directory, we grou
 
 This file defines your POST request handler that receives Slack events. Its pathname matches the URLs defined in your [`manifest.json`](./manifest.json). Learn more about Hono routing [here](https://nitro.build/guide/routing)
 
+## Inbound.new Email Integration
+
+This app integrates with [inbound.new](https://inbound.new) to receive emails and post them to Slack with full threading support.
+
+### Setup
+
+1. **Configure your inbound.new email address**: `slack@inbound.new`
+
+2. **Add environment variables**:
+   ```bash
+   INBOUND_API_KEY=your_inbound_api_key
+   INBOUND_SLACK_CHANNEL_ID=C085A8KPY66  # Optional: defaults to #slackbound-testing
+   ```
+
+3. **Configure webhook in inbound.new**:
+   - Set your webhook URL to: `https://your-domain.com/api/inbound`
+   - This endpoint accepts POST requests from inbound.new
+
+### Features
+
+#### 📧 Incoming Emails
+- When an email arrives at `slack@inbound.new`, it's posted to your Slack channel
+- **Email threads are preserved**: Reply emails automatically appear in the same Slack thread
+- Messages include: sender, subject, body, and formatting
+
+#### 💬 Reply to Emails from Slack
+- Reply in a Slack thread to send an email response via Inbound
+- Your Slack message is automatically sent as an email reply
+- A ✉️ reaction confirms the email was sent
+- A ❌ reaction indicates an error
+
+### How Threading Works
+
+1. **Incoming thread emails**: When Inbound sends an email with a `threadId`, the app checks if a Slack thread already exists for that email thread
+2. **Thread mapping**: The app stores a mapping between Inbound thread IDs and Slack message timestamps
+3. **Replies from Slack**: When you reply in a Slack thread, the app looks up the original email and sends a reply via `inbound.email.reply()`
+
+**Note**: Thread mappings are currently stored in-memory. For production use, configure Redis by:
+- Installing `ioredis` or `@upstash/redis`
+- Uncommenting the Redis implementation in [`src/bolt/utils/thread-storage.ts`](./src/bolt/utils/thread-storage.ts)
+- Setting `REDIS_URL` or `UPSTASH_REDIS_URL` environment variable
+
+### Configuration
+
+The channel ID is configurable via the `INBOUND_SLACK_CHANNEL_ID` environment variable. See [`src/bolt/utils/config.ts`](./src/bolt/utils/config.ts) for configuration options.
+
 ## Custom Scripts
 - `pnpm dev:tunnel`: A helper script to automatically start your Slack app with ngrok tunneling
