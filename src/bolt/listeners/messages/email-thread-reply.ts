@@ -1,5 +1,8 @@
 import { Inbound } from '@inboundemail/sdk';
 import type { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
+import { eq } from 'drizzle-orm';
+import { db } from '../../../server/db';
+import { userConfig } from '../../../server/db/schema';
 import { getInboundApiKey } from '../../utils/config';
 import { convertSlackEmojisToEmojis } from '../../utils/slack-emoji-converter';
 import { threadStorage } from '../../utils/thread-storage';
@@ -89,18 +92,65 @@ export const emailThreadReply = async ({
 
     // Get user info for the sender
     const userId = 'user' in event ? event.user : undefined;
-    let userName = 'Slack User';
     let userEmail = '';
+    let realName = 'Slack User';
 
     if (userId) {
       try {
         const userInfo = await client.users.info({ user: userId });
-        userName = userInfo.user?.real_name || userInfo.user?.name || userName;
+        realName = userInfo.user?.real_name || userInfo.user?.name || realName;
         userEmail = userInfo.user?.profile?.email || '';
+        console.log('users real name:', realName);
       } catch (error) {
         logger.warn('Could not fetch user info:', error);
       }
     }
+
+    // Fetch user configuration
+    let config: typeof userConfig.$inferSelect | undefined;
+    if (userId) {
+      try {
+        const configResult = await db
+          .select()
+          .from(userConfig)
+          .where(eq(userConfig.userId, userId))
+          .limit(1);
+        
+        if (configResult.length > 0) {
+          config = configResult[0];
+          logger.info(`Found user config for ${userId}: domain=${config.sendingDomain}, showFullEmail=${config.shouldShowFullEmail}`);
+        } else {
+          logger.info(`No user config found for ${userId}, using defaults`);
+        }
+      } catch (error) {
+        logger.warn('Could not fetch user config:', error);
+      }
+    }
+
+    // Generate email username from real name
+    // Convert to lowercase, replace spaces with dots, only keep alphanumeric and dots
+    const generateUsername = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replace(/\s+/g, '.') // Replace spaces with dots
+        .replace(/[^a-z0-9.]/g, ''); // Remove non-alphanumeric except dots
+    };
+
+    const generatedUsername = generateUsername(realName);
+    const sendingDomain = config?.sendingDomain || 'inbound.new';
+    const generatedEmail = `${generatedUsername}@${sendingDomain}`;
+
+    // Format the "from" field based on shouldShowFullEmail setting
+    let fromField: string;
+    if (config?.shouldShowFullEmail && userEmail) {
+      // Show original email if configured and available
+      fromField = `"${realName}" <${userEmail}>`;
+    } else {
+      // Show generated email
+      fromField = `"${realName}" <${generatedEmail}>`;
+    }
+
+    logger.info(`Sending email from: ${fromField}`);
 
     // Send reply via Inbound
     const inbound = new Inbound(getInboundApiKey());
@@ -110,7 +160,7 @@ export const emailThreadReply = async ({
     const response = await inbound.reply(emailId, {
       html: messageText, // Use HTML format to support inline images for custom emojis
       text: messageText.replace(/<img[^>]*>/g, ''), // Fallback plain text without img tags
-      from: userEmail || 'slack@inbound.new',
+      from: fromField,
     });
 
     logger.info(`Email reply sent successfully: ${response.data?.id}`);

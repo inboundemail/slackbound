@@ -1,9 +1,12 @@
 import type { InboundWebhookPayload } from '@inboundemail/sdk';
 import { eventHandler, readBody } from 'h3';
+import { eq } from 'drizzle-orm';
 import { app } from '../../bolt/app';
 import { getInboundApiKey, getInboundEmailChannelId } from '../../bolt/utils/config';
 import { parseEmailContent } from '../../bolt/utils/email-parser';
 import { threadStorage } from '../../bolt/utils/thread-storage';
+import { db } from '../db';
+import { userConfig } from '../db/schema';
 
 /**
  * Generate an avatar URL using useravatar.vercel.app with user initials
@@ -127,7 +130,44 @@ export default eventHandler(async (event) => {
       });
     }
 
-    // Download and upload attachments to Slack
+    // Generate avatar URL with user initials (needed for file uploads)
+    const avatarUrl = getAvatarUrl(fromName);
+    
+    // Try to find a matching Slack user by email to check their config
+    let shouldShowEmail = true; // Default to showing email
+    try {
+      // Find Slack user by email
+      const usersListResponse = await app.client.users.lookupByEmail({
+        email: fromEmail,
+      });
+      
+      if (usersListResponse.ok && usersListResponse.user?.id) {
+        const slackUserId = usersListResponse.user.id;
+        console.log(`[INBOUND] 👤 Found matching Slack user: ${slackUserId}`);
+        
+        // Check user configuration
+        const configResult = await db
+          .select()
+          .from(userConfig)
+          .where(eq(userConfig.userId, slackUserId))
+          .limit(1);
+        
+        if (configResult.length > 0) {
+          shouldShowEmail = configResult[0].shouldShowFullEmail;
+          console.log(`[INBOUND] ⚙️  User config found: shouldShowFullEmail=${shouldShowEmail}`);
+        } else {
+          console.log(`[INBOUND] ⚙️  No user config found, using default (show email)`);
+        }
+      }
+    } catch (error) {
+      // User not found in Slack or other error - default to showing email
+      console.log('[INBOUND] ⚙️  Could not find Slack user or config, using default (show email)');
+    }
+    
+    // Create username based on shouldShowEmail setting
+    const fullUsername = shouldShowEmail ? `${fromName} <${fromEmail}>` : fromName;
+
+    // Download and upload attachments to Slack with custom sender info
     const uploadedFileIds: string[] = [];
     if (attachments && attachments.length > 0) {
       console.log(`[INBOUND] 📎 Processing ${attachments.length} attachment(s)...`);
@@ -151,14 +191,19 @@ export default eventHandler(async (event) => {
           const fileBuffer = await downloadResponse.arrayBuffer();
           console.log(`[INBOUND] ✅ Downloaded ${attachment.filename}`);
 
-          // Upload to Slack
+          // Upload to Slack using legacy files.upload API to support custom username/icon
+          // Note: Using legacy API because files.uploadV2 doesn't support username/icon_url customization
           console.log(`[INBOUND] ⬆️  Uploading to Slack: ${attachment.filename}`);
-          const uploadResponse = await app.client.files.uploadV2({
-            channel_id: getInboundEmailChannelId(),
+          // biome-ignore lint/suspicious/noExplicitAny: files.upload is not in the TypeScript types but is still supported
+          const uploadResponse = await (app.client.files as any).upload({
+            channels: getInboundEmailChannelId(),
             file: Buffer.from(fileBuffer),
             filename: attachment.filename,
             title: attachment.filename,
             ...(slackThreadTs && { thread_ts: slackThreadTs }),
+            // Custom sender appearance (requires as_user: false)
+            username: fullUsername,
+            icon_url: avatarUrl,
           });
 
           if (uploadResponse.file?.id) {
@@ -173,12 +218,6 @@ export default eventHandler(async (event) => {
 
       console.log(`[INBOUND] 📎 Successfully uploaded ${uploadedFileIds.length}/${attachments.length} attachments`);
     }
-
-    // Generate avatar URL with user initials
-    const avatarUrl = getAvatarUrl(fromName);
-
-    // Create full username with name and email
-    const fullUsername = `${fromName} <${fromEmail}>`;
 
     console.log('[INBOUND] 👤 Bot appearance:');
     console.log(`  Username: ${fullUsername}`);
@@ -198,7 +237,7 @@ export default eventHandler(async (event) => {
       username: fullUsername, // Display sender's name and email as the bot username
       icon_url: avatarUrl, // Use useravatar with initials
       ...(slackThreadTs && { thread_ts: slackThreadTs }),
-      ...(uploadedFileIds.length > 0 && { files: uploadedFileIds }),
+      // Note: Files are uploaded separately using files.upload with custom username/icon
     });
 
     console.log(`[INBOUND] ✅ Posted to Slack successfully! Message TS: ${response.ts}`);
