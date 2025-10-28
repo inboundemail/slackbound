@@ -9,6 +9,8 @@
     "format": "biome check --write",
     "send": "tsx scripts/send-email.ts",
     "test:redis": "tsx scripts/test-redis.ts",
+    "replay": "tsx scripts/replay.ts",
+    "replay:list": "tsx scripts/replay.ts --list",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

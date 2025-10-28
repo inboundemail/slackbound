@@ -10,11 +10,10 @@ export default eventHandler(async () => {
   try {
     const channelId = getInboundEmailChannelId();
 
-    // Test 1: Custom username + Gravatar with useravatar fallback
-    const _testEmail = 'test@example.com';
+    // Test 1: Custom username + inbound.new avatar API
+    const testEmail = 'test@example.com';
     const testName = 'Test User';
-    const avatarUrl =
-      'https://www.gravatar.com/avatar/55502f40dc8b7c769880b10874abc9d0?s=200&d=https%3A%2F%2Fuseravatar.vercel.app%2Fapi%2Flogo%3Ftext%3DTU%26width%3D200%26height%3D200%26fontSize%3D100%26font%3DInter';
+    const avatarUrl = `https://inbound.new/api/avatar?${new URLSearchParams({ email: testEmail, name: testName }).toString()}`;
 
     const response1 = await app.client.chat.postMessage({
       channel: channelId,
@@ -24,7 +23,7 @@ export default eventHandler(async () => {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: '🧪 *Test Message #1*\n\nIf you see this with a custom username ("Test User") and avatar (TU initials), then `chat:write.customize` is working!',
+            text: '🧪 *Test Message #1*\n\nIf you see this with a custom username ("Test User") and avatar from inbound.new, then `chat:write.customize` is working!',
           },
         },
       ],

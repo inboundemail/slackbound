@@ -1,29 +1,25 @@
 import type { InboundWebhookPayload } from '@inboundemail/sdk';
 import { eventHandler, readBody } from 'h3';
-import { eq } from 'drizzle-orm';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import { app } from '../../bolt/app';
 import { getInboundApiKey, getInboundEmailChannelId } from '../../bolt/utils/config';
 import { parseEmailContent } from '../../bolt/utils/email-parser';
 import { threadStorage } from '../../bolt/utils/thread-storage';
-import { db } from '../db';
-import { userConfig } from '../db/schema';
+
+// Development mode - saves POST payloads to .data/requests/ for replay testing
+const LOCAL_DEV = true;
 
 /**
- * Generate an avatar URL using useravatar.vercel.app with user initials
+ * Generate an avatar URL using inbound.new avatar API
  */
-function getAvatarUrl(name: string): string {
-  // Extract initials (up to 2 characters)
-  const initials =
-    name
-      .split(' ')
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() || 'U';
+function getAvatarUrl(name: string, email: string): string {
+  const params = new URLSearchParams({
+    email: email,
+    name: name,
+  });
 
-  // Generate avatar with initials
-  return `https://useravatar.vercel.app/api/logo?text=${encodeURIComponent(initials)}&width=200&height=200&fontSize=100&font=Inter`;
+  return `https://inbound.new/api/avatar?${params.toString()}`;
 }
 
 export default eventHandler(async (event) => {
@@ -31,6 +27,19 @@ export default eventHandler(async (event) => {
 
   try {
     const payload: InboundWebhookPayload = await readBody(event);
+
+    // Save payload to file in LOCAL_DEV mode for replay testing
+    if (LOCAL_DEV) {
+      const requestsDir = join(process.cwd(), '.data', 'requests');
+      await mkdir(requestsDir, { recursive: true });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `request-${timestamp}.json`;
+      const filepath = join(requestsDir, filename);
+
+      await writeFile(filepath, JSON.stringify(payload, null, 2));
+      console.log(`[LOCAL_DEV] 💾 Saved request to: ${filename}`);
+    }
 
     // Extract email data
     const { email } = payload;
@@ -51,21 +60,25 @@ export default eventHandler(async (event) => {
     }
 
     // Atomic idempotency check: Check and mark as processed in one operation
-    console.log('[INBOUND] 🔍 Checking idempotency...');
-    const alreadyProcessed = await threadStorage.checkAndMarkEmailProcessed(email.id);
-    if (alreadyProcessed) {
-      console.log(`[IDEMPOTENCY] ⏭️  Email ${email.id} already processed, skipping duplicate webhook`);
-      console.log(`  Thread ID: ${email.threadId || 'none'}`);
-      console.log(`  Subject: ${email.subject || '(No Subject)'}`);
-      return {
-        success: true,
-        skipped: true,
-        reason: 'duplicate',
-        emailId: email.id,
-      };
+    // Skip idempotency check in LOCAL_DEV mode to allow replaying requests
+    if (!LOCAL_DEV) {
+      console.log('[INBOUND] 🔍 Checking idempotency...');
+      const alreadyProcessed = await threadStorage.checkAndMarkEmailProcessed(email.id);
+      if (alreadyProcessed) {
+        console.log(`[IDEMPOTENCY] ⏭️  Email ${email.id} already processed, skipping duplicate webhook`);
+        console.log(`  Thread ID: ${email.threadId || 'none'}`);
+        console.log(`  Subject: ${email.subject || '(No Subject)'}`);
+        return {
+          success: true,
+          skipped: true,
+          reason: 'duplicate',
+          emailId: email.id,
+        };
+      }
+      console.log(`[IDEMPOTENCY] ✅ Processing email ${email.id} for the first time`);
+    } else {
+      console.log('[LOCAL_DEV] ⚠️  Idempotency check SKIPPED for testing');
     }
-
-    console.log(`[IDEMPOTENCY] ✅ Processing email ${email.id} for the first time`);
 
     const fromAddress = email.from?.addresses?.[0];
     const fromName = fromAddress?.name || fromAddress?.address || 'Unknown';
@@ -121,7 +134,7 @@ export default eventHandler(async (event) => {
       });
     }
 
-    // Add image blocks for any extracted images
+    // Add image blocks for any extracted images (inline images from HTML)
     for (const imageUrl of images) {
       blocks.push({
         type: 'image',
@@ -130,53 +143,43 @@ export default eventHandler(async (event) => {
       });
     }
 
-    // Generate avatar URL with user initials (needed for file uploads)
-    const avatarUrl = getAvatarUrl(fromName);
+    // Note: File attachments are uploaded separately to the channel (not as blocks)
+
+    // Generate avatar URL using inbound.new avatar API
+    const avatarUrl = getAvatarUrl(fromName, fromEmail);
     
     // Try to find a matching Slack user by email to check their config
-    let shouldShowEmail = true; // Default to showing email
-    try {
-      // Find Slack user by email
-      const usersListResponse = await app.client.users.lookupByEmail({
-        email: fromEmail,
-      });
-      
-      if (usersListResponse.ok && usersListResponse.user?.id) {
-        const slackUserId = usersListResponse.user.id;
-        console.log(`[INBOUND] 👤 Found matching Slack user: ${slackUserId}`);
-        
-        // Check user configuration
-        const configResult = await db
-          .select()
-          .from(userConfig)
-          .where(eq(userConfig.userId, slackUserId))
-          .limit(1);
-        
-        if (configResult.length > 0) {
-          shouldShowEmail = configResult[0].shouldShowFullEmail;
-          console.log(`[INBOUND] ⚙️  User config found: shouldShowFullEmail=${shouldShowEmail}`);
-        } else {
-          console.log(`[INBOUND] ⚙️  No user config found, using default (show email)`);
-        }
-      }
-    } catch (error) {
-      // User not found in Slack or other error - default to showing email
-      console.log('[INBOUND] ⚙️  Could not find Slack user or config, using default (show email)');
-    }
+    let shouldShowEmail = false; // Default to showing email
+    
     
     // Create username based on shouldShowEmail setting
     const fullUsername = shouldShowEmail ? `${fromName} <${fromEmail}>` : fromName;
 
-    // Download and upload attachments to Slack with custom sender info
-    const uploadedFileIds: string[] = [];
+    // Download and store attachments locally, serve via our API
+    // This allows images and files to appear in the message with custom username/icon
+    const imageUrls: Array<{ url: string; filename: string }> = [];
+    const fileLinks: Array<{ url: string; filename: string }> = [];
+
     if (attachments && attachments.length > 0) {
       console.log(`[INBOUND] 📎 Processing ${attachments.length} attachment(s)...`);
       const inboundApiKey = getInboundApiKey();
 
+      // Ensure attachments directory exists
+      const attachmentsDir = join(process.cwd(), '.data', 'attachments');
+      await mkdir(attachmentsDir, { recursive: true });
+
+      // Separate image and non-image attachments
+      const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'];
+
       for (const attachment of attachments) {
         try {
+          if (!attachment.filename) {
+            console.error('[INBOUND] ⚠️  Skipping attachment without filename');
+            continue;
+          }
+
           console.log(`[INBOUND] ⬇️  Downloading: ${attachment.filename} (${attachment.size} bytes)`);
-          
+
           // Download attachment from inbound.new
           const downloadResponse = await fetch(attachment.downloadUrl, {
             headers: {
@@ -191,24 +194,31 @@ export default eventHandler(async (event) => {
           const fileBuffer = await downloadResponse.arrayBuffer();
           console.log(`[INBOUND] ✅ Downloaded ${attachment.filename}`);
 
-          // Upload to Slack using legacy files.upload API to support custom username/icon
-          // Note: Using legacy API because files.uploadV2 doesn't support username/icon_url customization
-          console.log(`[INBOUND] ⬆️  Uploading to Slack: ${attachment.filename}`);
-          // biome-ignore lint/suspicious/noExplicitAny: files.upload is not in the TypeScript types but is still supported
-          const uploadResponse = await (app.client.files as any).upload({
-            channels: getInboundEmailChannelId(),
-            file: Buffer.from(fileBuffer),
-            filename: attachment.filename,
-            title: attachment.filename,
-            ...(slackThreadTs && { thread_ts: slackThreadTs }),
-            // Custom sender appearance (requires as_user: false)
-            username: fullUsername,
-            icon_url: avatarUrl,
-          });
+          // Generate unique filename using email ID to avoid collisions
+          const uniqueFilename = `${email.id}-${attachment.filename}`;
+          const filePath = join(attachmentsDir, uniqueFilename);
 
-          if (uploadResponse.file?.id) {
-            uploadedFileIds.push(uploadResponse.file.id);
-            console.log(`[INBOUND] ✅ Uploaded to Slack: ${attachment.filename} (ID: ${uploadResponse.file.id})`);
+          // Save file locally
+          await writeFile(filePath, Buffer.from(fileBuffer));
+          console.log(`[INBOUND] 💾 Saved to: ${filePath}`);
+
+          // Generate public URL for the attachment
+          const baseUrl = process.env.PUBLIC_URL || 'https://dev.inbound.new';
+          // URL-encode the filename to handle spaces and special characters
+          const encodedFilename = encodeURIComponent(uniqueFilename);
+          const attachmentUrl = `${baseUrl}/api/attachment/${encodedFilename}`;
+          console.log(`[INBOUND] 🔗 Generated attachment URL: ${attachmentUrl}`);
+
+          // Check if it's an image
+          const ext = attachment.filename.split('.').pop()?.toLowerCase();
+          const isImage = ext && imageExtensions.includes(ext);
+
+          if (isImage) {
+            imageUrls.push({ url: attachmentUrl, filename: attachment.filename });
+            console.log(`[INBOUND] 🖼️  Image will be displayed inline: ${attachment.filename}`);
+          } else {
+            fileLinks.push({ url: attachmentUrl, filename: attachment.filename });
+            console.log(`[INBOUND] 📄 File will be linked: ${attachment.filename}`);
           }
         } catch (error) {
           console.error(`[INBOUND] ❌ Failed to process attachment ${attachment.filename}:`, error);
@@ -216,7 +226,33 @@ export default eventHandler(async (event) => {
         }
       }
 
-      console.log(`[INBOUND] 📎 Successfully uploaded ${uploadedFileIds.length}/${attachments.length} attachments`);
+      console.log(`[INBOUND] 📎 Processed ${imageUrls.length + fileLinks.length}/${attachments.length} attachments`);
+      console.log(`[INBOUND] 🖼️  ${imageUrls.length} image(s) will appear inline`);
+      console.log(`[INBOUND] 📄 ${fileLinks.length} file(s) will be linked`);
+    }
+
+    // Add image blocks for attachment images (will appear inline with custom username/icon)
+    for (const image of imageUrls) {
+      blocks.push({
+        type: 'image',
+        image_url: image.url,
+        alt_text: image.filename,
+      });
+    }
+
+    // Add file links for non-image attachments
+    if (fileLinks.length > 0) {
+      const fileLinksText = fileLinks
+        .map((file) => `📎 <${file.url}|${file.filename}>`)
+        .join('\n');
+
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Attachments:*\n${fileLinksText}`,
+        },
+      });
     }
 
     console.log('[INBOUND] 👤 Bot appearance:');
@@ -228,16 +264,27 @@ export default eventHandler(async (event) => {
     console.log(
       `[INBOUND] 📤 Posting to Slack channel: ${channelId}${slackThreadTs ? ` (thread: ${slackThreadTs})` : ''}`,
     );
+
+    const totalAttachments = imageUrls.length + fileLinks.length;
+    if (totalAttachments > 0) {
+      console.log(`[INBOUND] 📎 ${totalAttachments} attachment(s) will appear with custom sender identity`);
+    }
+
+    // Debug: Log the blocks being sent to Slack
+    console.log('[INBOUND] 🔍 Blocks being sent to Slack:');
+    console.log(JSON.stringify(blocks, null, 2));
+
     const response = await app.client.chat.postMessage({
       channel: channelId,
       text: `New email from ${fromName}: ${subject}`,
-      blocks,
+      blocks, // Message blocks (includes images and file links)
       unfurl_links: false,
       unfurl_media: false,
       username: fullUsername, // Display sender's name and email as the bot username
-      icon_url: avatarUrl, // Use useravatar with initials
+      icon_url: avatarUrl, // Use inbound.new avatar API
       ...(slackThreadTs && { thread_ts: slackThreadTs }),
-      // Note: Files are uploaded separately using files.upload with custom username/icon
+      // Note: Attachments are served via /api/attachment and included as image blocks or links
+      // This allows them to appear with custom username/icon (solving Slack API limitation)
     });
 
     console.log(`[INBOUND] ✅ Posted to Slack successfully! Message TS: ${response.ts}`);
