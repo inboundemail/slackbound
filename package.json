@@ -1,51 +1,20 @@
 {
-  "name": "slack-bolt-with-nitro",
+  "name": "slackbound",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "build": "nitro build",
-    "dev": "nitro dev",
-    "dev:tunnel": "tsx scripts/dev.tunnel.ts",
-    "lint": "biome check",
-    "format": "biome check --write",
-    "send": "tsx scripts/send-email.ts",
-    "test:redis": "tsx scripts/test-redis.ts",
-    "replay": "tsx scripts/replay.ts",
-    "replay:list": "tsx scripts/replay.ts --list",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
-  },
-  "author": "Vercel",
-  "license": "MIT",
-  "keywords": [
-    "slack",
-    "bolt",
-    "vercel",
-    "nitro"
-  ],
-  "dependencies": {
-    "@inboundemail/sdk": "^4.3.1",
-    "@neondatabase/serverless": "^1.0.2",
-    "@slack/bolt": "^4.5.0",
-    "@upstash/redis": "^1.35.6",
-    "@vercel/slack-bolt": "^0.1.5",
-    "drizzle-orm": "^0.44.7",
-    "email-reply-parser": "^2.1.0",
-    "node-emoji": "^2.2.0",
-    "turndown": "^7.2.1"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "clean": "turbo run clean"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.6",
-    "@ngrok/ngrok": "^1.5.2",
-    "@slack/cli-hooks": "^1.2.1",
-    "@types/turndown": "^5.0.5",
-    "dotenv": "^17.2.3",
-    "drizzle-kit": "^0.31.5",
-    "h3": "^1.15.4",
-    "nitropack": "^2.12.7",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "turbo": "^2.3.3"
   },
-  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
+  "packageManager": "bun@1.3.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

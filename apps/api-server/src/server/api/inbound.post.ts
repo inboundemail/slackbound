@@ -276,7 +276,7 @@ export default eventHandler(async (event) => {
 
     const response = await app.client.chat.postMessage({
       channel: channelId,
-      text: `New email from ${fromName}: ${subject}`,
+      text: cleanedText,
       blocks, // Message blocks (includes images and file links)
       unfurl_links: false,
       unfurl_media: false,

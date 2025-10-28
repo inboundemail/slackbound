@@ -1,9 +1,25 @@
+# Dependencies
 node_modules
+
+# Build outputs
 dist
-.data
 .nitro
-.cache
 .output
+
+# Cache
+.cache
+.turbo
+
+# Environment
 .env
 .env.local
+
+# Data
+.data
 drizzle
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.pnpm-debug.log*
