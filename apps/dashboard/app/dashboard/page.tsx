@@ -23,6 +23,7 @@ import {
 import { LottieIcon } from "@/components/lotties/lottie-icon";
 import slackLogoAnimation from "@/components/lotties/slack-logo.json";
 import configIconAnimation from "@/components/lotties/config-icon.json";
+import { CommandPalette } from "@/components/command-palette";
 
 const lato = Lato({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -49,7 +50,7 @@ export default function DashboardPage() {
   const [selectedDomain, setSelectedDomain] = useState<string>("");
   // Mock channel mappings data with different colors
   const colors = ["bg-blue-500", "bg-purple-500", "bg-green-500", "bg-orange-500"];
-  const [channelMappings] = useState<
+  const [channelMappings, setChannelMappings] = useState<
     Array<{
       channelName: string;
       emailAddress: string;
@@ -73,6 +74,23 @@ export default function DashboardPage() {
       color: colors[1],
     },
   ]);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Handle channel creation (UI only for now)
+  const handleChannelCreate = (channelName: string, emailAddress: string) => {
+    const color = colors[channelMappings.length % colors.length];
+    setChannelMappings([
+      ...channelMappings,
+      {
+        channelName: `#inb-ext-${channelName}`,
+        emailAddress,
+        conversations: 0,
+        messages: 0,
+        color,
+      },
+    ]);
+  };
+
   const fallbackInitials = (userName || userEmail || "U")
     .split(" ")
     .map((part) => part[0])
@@ -524,6 +542,12 @@ export default function DashboardPage() {
             </a>
           </div>
         )}
+        <CommandPalette
+          open={isCommandPaletteOpen}
+          onOpenChange={setIsCommandPaletteOpen}
+          domains={domains}
+          onChannelCreate={handleChannelCreate}
+        />
       </main>
     </div>
   );

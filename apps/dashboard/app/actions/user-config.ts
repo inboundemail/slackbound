@@ -7,8 +7,31 @@ import { userConfig, account } from "@/db/schema";
 import { getAuth } from "@/lib/auth";
 
 /**
- * Get the Slack user ID from the current session
+ * Create Slack channel (placeholder)
  */
+export async function createSlackChannel(channelName: string) {
+  // TODO: Implement Slack channel creation
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return { success: true, channelId: "C123456" };
+}
+
+/**
+ * Create email address (placeholder)
+ */
+export async function createEmailAddress(emailAddress: string) {
+  // TODO: Implement email address creation via Inbound API
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return { success: true, emailId: "email123" };
+}
+
+/**
+ * Link channel and email (placeholder)
+ */
+export async function linkChannelAndEmail(channelId: string, emailId: string) {
+  // TODO: Implement linking channel and email
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return { success: true };
+}
 async function getSlackUserId(): Promise<string | null> {
   try {
     const auth = getAuth();
