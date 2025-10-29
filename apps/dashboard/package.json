@@ -15,10 +15,12 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "@radix-ui/react-radio-group": "^1.3.8",
+    "@radix-ui/react-select": "^2.2.6",
     "better-auth": "^1.3.33",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.44.7",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.548.0",
     "next": "16.0.0",
     "react": "19.2.0",
