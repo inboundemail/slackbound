@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "nitro build",
-    "dev": "nitro dev",
+    "dev": "PORT=3668 nitro dev",
     "dev:tunnel": "tsx scripts/dev.tunnel.ts",
     "lint": "biome check",
     "format": "biome check --write",

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Outfit } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import { Toaster } from "sonner";
 import "./globals.css";
+// Root layout must remain a Server Component. Avoid client-only hooks here.
 
 const geist = Geist({
   variable: "--font-geist",
@@ -16,8 +18,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "SlackBound - Coming Soon",
-  description: "SlackBound waitlist",
+  title: "Slackbound - Email Management in Slack",
+  description: "Send and manage your email entirely in Slack. Simple, powerful, and seamlessly integrated.",
 };
 
 export default function RootLayout({
@@ -28,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geist.variable} ${outfit.variable} antialiased`}
+        className={`${geist.variable} ${GeistSans.variable} ${outfit.variable} antialiased`}
       >
         {children}
         <Toaster />

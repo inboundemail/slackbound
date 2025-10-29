@@ -16,5 +16,10 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "better-auth": "^1.3.34",
+    "geist": "^1.5.1",
+    "lucide-react": "^0.548.0"
+  }
 }
