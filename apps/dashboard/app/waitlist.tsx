@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SlackIcon } from "@/components/slack-icon";
+import Image from "next/image";
 import { addToWaitlist } from "./actions/waitlist";
 
 export default function Home() {
@@ -39,7 +39,7 @@ export default function Home() {
             className="flex items-center gap-3 font-outfit text-6xl font-semibold"
             style={{ color: "#414141" }}
           >
-            <SlackIcon className="h-14 w-14" />
+            <Image src="/images/slackbound-icon.png" alt="Slackbound icon" className="h-14 w-14" />
             slackbound
           </h1>
           <p 
