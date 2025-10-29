@@ -8,7 +8,12 @@
     "UPSTASH_REDIS_REST_TOKEN",
     "INBOUND_SLACK_CHANNEL_ID",
     "DATABASE_URL",
-    "PUBLIC_URL"
+    "PUBLIC_URL",
+    "RESEND_API_KEY",
+    "RESEND_AUDIENCE_ID",
+    "SLACK_CLIENT_ID",
+    "SLACK_CLIENT_SECRET",
+    "NEXT_PUBLIC_APP_URL"
   ],
   "tasks": {
     "build": {
