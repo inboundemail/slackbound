@@ -8,7 +8,10 @@ let cachedAuth: ReturnType<typeof betterAuth> | null = null;
 export function getAuth() {
   if (cachedAuth) return cachedAuth;
   const db = getDb();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  
   cachedAuth = betterAuth({
+    baseURL: baseUrl,
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
@@ -25,7 +28,6 @@ export function getAuth() {
       slack: {
         clientId: process.env.SLACK_CLIENT_ID as string,
         clientSecret: process.env.SLACK_CLIENT_SECRET as string,
-        redirectURI: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/slack`,
       },
     },
   });

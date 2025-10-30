@@ -83,12 +83,6 @@ export default function Home() {
     try {
       setIsLoading(true);
       await authClient.signIn.social({
-        scopes: [
-          "identity.basic",
-          "identity.email",
-          "channels:read",
-          "channels:manage",
-        ],
         provider: "slack",
         callbackURL: "/dashboard",
       });

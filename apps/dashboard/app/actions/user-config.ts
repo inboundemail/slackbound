@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { getDb } from "@/db";
 import { userConfig, account } from "@/db/schema";
 import { getAuth } from "@/lib/auth";
+import { WebClient } from "@slack/web-api";
 
 /**
  * Create Slack channel (placeholder)
@@ -58,6 +59,156 @@ async function getSlackUserId(): Promise<string | null> {
   } catch (error) {
     console.error("Error getting Slack user ID:", error);
     return null;
+  }
+}
+
+/**
+ * Get Slack access token from the current user's session
+ */
+async function getSlackAccessToken(): Promise<string | null> {
+  try {
+    const auth = getAuth();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user?.id) {
+      return null;
+    }
+
+    const db = getDb();
+    const accountRecord = await db
+      .select()
+      .from(account)
+      .where(eq(account.userId, session.user.id))
+      .limit(1);
+
+    if (accountRecord.length === 0 || accountRecord[0].providerId !== "slack") {
+      return null;
+    }
+
+    return accountRecord[0].accessToken || null;
+  } catch (error) {
+    console.error("Error getting Slack access token:", error);
+    return null;
+  }
+}
+
+/**
+ * Get Slack user info using the Slack SDK
+ */
+export async function getSlackUserInfo() {
+  try {
+    const accessToken = await getSlackAccessToken();
+    if (!accessToken) {
+      return {
+        success: false,
+        error: "Slack access token not found. Please sign in with Slack.",
+      };
+    }
+
+    const client = new WebClient(accessToken);
+    const result = await client.openid.connect.userInfo();
+    console.log("Slack user info:", result);
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    console.error("Error getting Slack user info:", error);
+    return null;
+  }
+}
+
+/**
+ * Get Slack workspace info using auth.test
+ */
+export async function getSlackWorkspaceInfo() {
+  try {
+    const accessToken = await getSlackAccessToken();
+    if (!accessToken) {
+      return {
+        success: false,
+        error: "Slack access token not found. Please sign in with Slack.",
+      };
+    }
+
+    const client = new WebClient(accessToken);
+    const result = await client.auth.test();
+
+    if (!result.ok) {
+      return {
+        success: false,
+        error: result.error || "Failed to get workspace info",
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        teamId: result.team_id as string,
+        teamName: result.team as string,
+        teamUrl: result.url as string,
+        userId: result.user_id as string,
+        userName: result.user as string,
+      },
+    };
+  } catch (error) {
+    console.error("Error getting Slack workspace info:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to get workspace info",
+    };
+  }
+}
+
+/**
+ * Fetch Slack channels using the Slack SDK
+ */
+export async function fetchSlackChannels() {
+  try {
+    const accessToken = await getSlackAccessToken();
+    
+    if (!accessToken) {
+      return {
+        success: false,
+        error: "Slack access token not found. Please sign in with Slack.",
+      };
+    }
+
+    const client = new WebClient(accessToken);
+    const result = await client.conversations.list({
+      types: "public_channel,private_channel",
+      exclude_archived: true,
+    });
+
+    if (!result.ok) {
+      return {
+        success: false,
+        error: result.error || "Failed to fetch channels",
+      };
+    }
+
+    const channels = (result.channels || [])
+      .filter((channel) => channel.id && channel.name)
+      .map((channel) => ({
+        id: channel.id!,
+        name: channel.name!,
+        isPrivate: channel.is_private || false,
+        isMember: channel.is_member || false,
+        numMembers: channel.num_members || 0,
+      }));
+
+    return {
+      success: true,
+      data: channels,
+    };
+  } catch (error) {
+    console.error("Error fetching Slack channels:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch channels",
+    };
   }
 }
 

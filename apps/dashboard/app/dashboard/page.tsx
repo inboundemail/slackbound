@@ -11,6 +11,8 @@ import {
   updateUserConfig,
   updateInboundApiKey,
   fetchInboundDomains,
+  fetchSlackChannels,
+  getSlackWorkspaceInfo,
 } from "@/app/actions/user-config";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,7 +25,9 @@ import {
 import { LottieIcon } from "@/components/lotties/lottie-icon";
 import slackLogoAnimation from "@/components/lotties/slack-logo.json";
 import configIconAnimation from "@/components/lotties/config-icon.json";
+import developerIconAnimation from "@/components/lotties/developer-icon.json";
 import { CommandPalette } from "@/components/command-palette";
+import { redirect } from "next/navigation";
 
 const lato = Lato({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -48,6 +52,25 @@ export default function DashboardPage() {
   >([]);
   const [isLoadingDomains, setIsLoadingDomains] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string>("");
+  const [slackChannels, setSlackChannels] = useState<
+    Array<{
+      id: string;
+      name: string;
+      isPrivate: boolean;
+      isMember: boolean;
+      numMembers: number;
+    }>
+  >([]);
+  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
+  const [workspaceInfo, setWorkspaceInfo] = useState<{
+    teamId: string;
+    teamName: string;
+    teamUrl: string;
+    userId: string;
+    userName: string;
+  } | null>(null);
+  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
   // Mock channel mappings data with different colors
   const colors = ["bg-blue-500", "bg-purple-500", "bg-green-500", "bg-orange-500"];
   const [channelMappings, setChannelMappings] = useState<
@@ -113,6 +136,31 @@ export default function DashboardPage() {
     }
   };
 
+  // Fetch Slack channels
+  const loadSlackChannels = async () => {
+    setIsLoadingChannels(true);
+    setChannelsError(null);
+    const result = await fetchSlackChannels();
+    setIsLoadingChannels(false);
+
+    if (result.success && result.data) {
+      setSlackChannels(result.data);
+    } else {
+      setChannelsError(result.error || "Failed to load channels");
+    }
+  };
+
+  // Fetch Slack workspace info
+  const loadWorkspaceInfo = async () => {
+    setIsLoadingWorkspace(true);
+    const result = await getSlackWorkspaceInfo();
+    setIsLoadingWorkspace(false);
+
+    if (result.success && result.data) {
+      setWorkspaceInfo(result.data);
+    }
+  };
+
   // Fetch initial config
   useEffect(() => {
     if (!isPending && user) {
@@ -140,6 +188,10 @@ export default function DashboardPage() {
         .finally(() => {
           setIsInitialLoading(false);
         });
+
+      // Load Slack channels and workspace info
+      loadSlackChannels();
+      loadWorkspaceInfo();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPending, user]);
@@ -206,6 +258,10 @@ export default function DashboardPage() {
     }
   };
 
+  if (!user && !isPending) {
+    redirect("/");
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
@@ -255,15 +311,73 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {isPending ? (
+        {isPending && user ? (
           <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-6">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             <span className="text-sm text-muted-foreground">
               Loading session…
             </span>
           </div>
-        ) : user ? (
+        ) : (
           <div className="space-y-6">
+            {/* Slack Channels Card */}
+            <div className="rounded-lg border border-border bg-background p-6">
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className="h-[1.25em] w-[1.25em]">
+                  <LottieIcon animationData={slackLogoAnimation} />
+                </span>
+                Available Slack Channels
+              </h2>
+              <p className="mb-6 text-sm text-muted-foreground">
+                All available channels in your Slack workspace.
+              </p>
+              <hr className="my-6 border-border" />
+              {isLoadingChannels ? (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <span className="text-sm text-muted-foreground">
+                    Loading channels...
+                  </span>
+                </div>
+              ) : channelsError ? (
+                <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4">
+                  <p className="text-sm text-destructive">{channelsError}</p>
+                </div>
+              ) : slackChannels.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No channels found.
+                </p>
+              ) : (
+                <div className="-mx-2 divide-y divide-border">
+                  {slackChannels.map((channel) => (
+                    <div
+                      key={channel.id}
+                      className="flex items-center justify-between px-2 py-3"
+                    >
+                      <div className="min-w-0 flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">
+                          #{channel.name}
+                        </span>
+                        {channel.isPrivate && (
+                          <span className="text-xs text-muted-foreground">
+                            (Private)
+                          </span>
+                        )}
+                        {channel.isMember && (
+                          <span className="text-xs text-muted-foreground">
+                            (Member)
+                          </span>
+                        )}
+                      </div>
+                      <div className="ml-4 flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                        <span>{channel.numMembers} members</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Channels Card */}
             <div className="rounded-lg border border-border bg-background p-6">
               <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -306,6 +420,72 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Developer Card */}
+            <div className="rounded-lg border border-border bg-background p-6">
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className="h-[1.25em] w-[1.25em]">
+                  <LottieIcon animationData={developerIconAnimation} />
+                </span>
+                Developer
+              </h2>
+              <p className="mb-6 text-sm text-muted-foreground">
+                Workspace information and development tools.
+              </p>
+              <hr className="my-6 border-border" />
+              {isLoadingWorkspace ? (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <span className="text-sm text-muted-foreground">
+                    Loading workspace info...
+                  </span>
+                </div>
+              ) : workspaceInfo ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Workspace</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {workspaceInfo.teamName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Workspace ID</p>
+                      <p className="text-sm font-mono text-foreground">
+                        {workspaceInfo.teamId}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">User</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {workspaceInfo.userName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">User ID</p>
+                      <p className="text-sm font-mono text-foreground">
+                        {workspaceInfo.userId}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Workspace URL</p>
+                    <a
+                      href={workspaceInfo.teamUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline break-all"
+                    >
+                      {workspaceInfo.teamUrl}
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No workspace information available.
+                </p>
+              )}
             </div>
 
             {/* Configuration Card */}
@@ -530,16 +710,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="rounded-lg border border-border bg-background p-6">
-            <p className="text-sm text-muted-foreground">No active session.</p>
-            <a
-              href="/"
-              className="mt-3 inline-flex items-center rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted/40"
-            >
-              Go to Home
-            </a>
           </div>
         )}
         <CommandPalette
